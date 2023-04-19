@@ -5,7 +5,7 @@ class MyDocument extends Document {
     return (
       <Html lang={siteMetadata.language} className="scroll-smooth">
         <Head>
-          <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/sharingan.icon" />
+          <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/sharingan.ico" />
           <link
             rel="icon"
             type="image/png"
