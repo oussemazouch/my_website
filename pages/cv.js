@@ -11,7 +11,7 @@ export default function Projects() {
           <h1 className="text-xl font-extrabold leading-9 tracking-tight text-gray-200 dark:text-gray-100 sm:text-2xl sm:leading-10 md:text-3xl md:leading-14">
             My Certifications
           </h1>
-          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">  
+          <p className="text-lg leading-7 text-gray-500 dark:text-gray-400">
           </p>
         </div>
         <div className="container py-12">
