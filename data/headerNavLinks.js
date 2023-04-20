@@ -8,7 +8,7 @@ const headerNavLinks = [
   //   title: 'cv',
   // },
   {
-    href: 'https://medium.com/@oussemazouch/format-shop-challenge-from-the-jingle-bell-ctf-e7863d3e14b2',
+    href: '/static/images/pen.pdf',
     title: 'cv',
   },
 
