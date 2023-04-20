@@ -5,18 +5,8 @@ class MyDocument extends Document {
       <Html lang="en" className="scroll-smooth">
         <Head>
           <link rel="apple-touch-icon" sizes="76x76" href="/static/favicons/sharingan.ico" />
-          <link
-            rel="icon"
-            type="image/png"
-            sizes="32x32"
-            href="/static/favicons/sharingan.ico"
-          />
-          <link
-            rel="icon"
-            type="image/png"
-            sizes="16x16"
-            href="/static/favicons/sharingan.ico"
-          />
+          <link rel="icon" type="image/png" sizes="32x32" href="/static/favicons/sharingan.ico"/>
+          <link rel="icon" type="image/png" sizes="16x16" href="/static/favicons/sharingan.ico"/>
           <meta name="msapplication-TileColor" content="#000000" />
           <meta name="theme-color" media="(prefers-color-scheme: light)" content="#fff" />
           <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000" />
