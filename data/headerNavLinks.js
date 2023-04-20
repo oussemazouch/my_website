@@ -8,7 +8,7 @@ const headerNavLinks = [
   //   title: 'cv',
   // },
   {
-    href: '/static/images/pen.pdf',
+    href: '/static/images/cv.pdf',
     title: 'cv',
   },
 
