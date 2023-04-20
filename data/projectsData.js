@@ -16,7 +16,7 @@ const projectsData = [
     title: 'pentesterlab: Essential badge ',
     description: `This badge aims at covering the most common web vulnerabilities.`,
     imgSrc: '/static/images/pentesterlab.png',
-    href: '/static/images/pen.pdf',
+    href: '/static/PDFs/pen.pdf',
   },
 ]
 export default projectsData
