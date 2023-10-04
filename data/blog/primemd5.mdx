@@ -127,43 +127,4 @@ def json_send(hsh):
     request = json.dumps(hsh).encode()  
     tn.sendline(request)  
   
-input1 = array('I',  [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb,0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a])  
-  
-input2 = array('I', [x^y for x,y in zip(input1,[0, 0, 0, 0, 0, 1<<10, 0, 0, 0, 0, 1<<31, 0, 0, 0, 0, 0])])  
-  
-  
-input1=bytes(input1)  
-input2=bytes(input2)  
-  
-n = 0  
-s = long_to_bytes(n, 4)    
-while not (isPrime(bytes_to_long(input1 + s))):  
-    n += 1  
-    s = long_to_bytes(n, 4)
-      
-  
-prime=bytes_to_long(input1 + s)  
-non_prime=bytes_to_long(input2 + s)  
-# a is a divisor of non_prime so the pgdcd(a,non_prime)==a  
-a=349 # you can get that value from factorising non_prime in http://factordb.com/  
-  
-  
-request_1 = {  
-        "option": "sign",  
-        "prime": prime,  
-        }  
-  
-json_send(request_1)  
-print(tn.recvline())  
-signature=(json_recv()['signature'])  
-request_2 = {  
-        "option": "check",  
-        "prime": non_prime,  
-        "signature": signature,  
-        "a":a  
-}  
-  
-json_send(request_2)  
-tn.interactive()
-```
 
