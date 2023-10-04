@@ -7,9 +7,173 @@ summary: 'writeup for a  crypto challenge from cryptohack(from the hashing funct
 authors: ['oussema zouch']
 ---
 ### PriMeD5 challenge (From cryptohack).
-given the source code:
 
-mùaze,;d,ô,poajzpefkpaekz$^pfkez$^lcez
+given the source code of the challenge :
+```python
+from Crypto.PublicKey import RSA  
+from Crypto.Hash import MD5  
+from Crypto.Signature import pkcs1_15  
+from Crypto.Util.number import long_to_bytes, isPrime  
+import math  
+from utils import listener  
+# from secrets import N, E, D  
+  
+FLAG = "crypto{??????????????????}"  
+  
+  
+key = RSA.construct((N, E, D))  
+sig_scheme = pkcs1_15.new(key)  
+  
+  
+class Challenge():  
+    def __init__(self):  
+        self.before_input = "Primality checking is expensive so I made a service that signs primes, allowing anyone to quickly check if a number is prime\n"  
+  
+    def challenge(self, msg):  
+        if "option" not in msg:  
+            return {"error": "You must send an option to this server."}  
+  
+        elif msg["option"] == "sign":  
+            p = int(msg["prime"])  
+            if p.bit_length() > 1024:  
+                return {"error": "The prime is too large."}  
+            if not isPrime(p):  
+                return {"error": "You must specify a prime."}  
+  
+            hash = MD5.new(long_to_bytes(p))  
+            sig = sig_scheme.sign(hash)  
+            return {"signature": sig.hex()}  
+  
+        elif msg["option"] == "check":  
+            p = int(msg["prime"])  
+            sig = bytes.fromhex(msg["signature"])  
+            hash = MD5.new(long_to_bytes(p))  
+            try:  
+                sig_scheme.verify(hash, sig)  
+            except ValueError:  
+                return {"error": "Invalid signature."}  
+  
+            a = int(msg["a"])  
+            if a < 1:  
+                return {"error": "`a` value invalid"}  
+            if a >= p:  
+                return {"error": "`a` value too large"}  
+            g = math.gcd(a, p)  
+            flag_byte = FLAG[:g]  
+            return {"msg": f"Valid signature. First byte of flag: {flag_byte}"}  
+  
+        else:  
+            return {"error": "Unknown option."}  
+  
+  
+listener.start_server(port=13392)
+```
+
+
+### analysing the code:
+the msg  must  contain the 'option' key  and it  can have two values :
+###### if option='sign'
+then we are obliged to send a prime number `p` (its bit_length 1024) ,the server calculates its MD5 hash , then sign it with  sig_scheme and returns its signature as a hex string.
+###### if option='check'
+the it's required  to send a prime and a signature and the server will verify its  validity.
+also our json input should contain a number 'a'(a in [1,p[) .
+on the assumption that our signature is valid the server will return (pgcd(a, p)) bytes of the flag 
+
+#### the problem is that : 
+ ∀ `P` Prime number
+ ∀ a  in [1,p [
+ PGDD(p,a) =1
+
+
+### Brainstorming 
+
+ if 'option == 'check 'the server  don't check the primality of the input. `p` can any number and `a`  a divisor of p and this way pgcd(a,p)!=1.
+ yet  can't get the signature of a non-prime number .
+hmmmmmmmmm!!!
+ my idea is to look for   two numbers  `P1` (prime number)  and `P2` (non prime number ) that verify this condition(signature(`P1`)==  signature(`P2`))
+ luckily ,two Chinese researchers, published a  single-block collision for MD5(our hashing algorithm).
+```python
+input1 = array('I', [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,0x6503cf04, 0x854f709e,0xfb0fc034,0x874c9c65,0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb, 0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a])
+input2 = array('I', [x^y for x,y in zip(input1, [0, 0, 0, 0, 0, 1<<10, 0, 0, 0, 0, 1<<31, 0, 0, 0, 0, 0])])
+```
+
+
+MD5(input1)=MD5(input2) ==> MD5(input1∣∣s)=MD5(input2∣∣s) (s is  a string ).
+we  have to  convert one of them to a prime number get the flag.
+
+###### to convert input1 to a prime :
+```python
+n = 0  
+s = long_to_bytes(n, 4)    
+while not (isPrime(bytes_to_long(input1 + s))):  
+    n += 1  
+    s = long_to_bytes(n, 4)
+```
+
+
+### Exploitation:
+
+```python
+  
+import json  
+from pwn import *  
+from array import array  
+from Crypto.Util.number import *  
+  
+HOST = "socket.cryptohack.org"  
+PORT = 13392  
+  
+tn = remote(HOST, PORT)  
+  
+FLAG = "crypto{???????????????????????????????????}"  
+def json_recv():  
+    line=tn.recvline()  
+    return json.loads(line.decode())  
+  
+def json_send(hsh):  
+    request = json.dumps(hsh).encode()  
+    tn.sendline(request)  
+  
+input1 = array('I',  [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,0x6503cf04,0x854f709e,0xfb0fc034,0x874c9c65,0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb,0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a])  
+  
+input2 = array('I', [x^y for x,y in zip(input1,[0, 0, 0, 0, 0, 1<<10, 0, 0, 0, 0, 1<<31, 0, 0, 0, 0, 0])])  
+  
+  
+input1=bytes(input1)  
+input2=bytes(input2)  
+  
+n = 0  
+s = long_to_bytes(n, 4)    
+while not (isPrime(bytes_to_long(input1 + s))):  
+    n += 1  
+    s = long_to_bytes(n, 4)
+      
+  
+prime=bytes_to_long(input1 + s)  
+non_prime=bytes_to_long(input2 + s)  
+# a is a divisor of non_prime so the pgdcd(a,non_prime)==a  
+a=349 # you can get that value from factorising non_prime in http://factordb.com/  
+  
+  
+request_1 = {  
+        "option": "sign",  
+        "prime": prime,  
+        }  
+  
+json_send(request_1)  
+print(tn.recvline())  
+signature=(json_recv()['signature'])  
+request_2 = {  
+        "option": "check",  
+        "prime": non_prime,  
+        "signature": signature,  
+        "a":a  
+}  
+  
+json_send(request_2)  
+tn.interactive()
+```
+
 
 
 
