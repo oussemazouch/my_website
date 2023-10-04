@@ -85,46 +85,5 @@ on the assumption that our signature is valid the server will return (pgcd(a, p)
 hmmmmmmmmm!!!
  my idea is to look for   two numbers  `P1` (prime number)  and `P2` (non prime number ) that verify this condition(signature(`P1`)==  signature(`P2`))
  luckily ,two Chinese researchers, published a  single-block collision for MD5(our hashing algorithm).
-```python
-input1 = array('I', [0x6165300e,0x87a79a55,0xf7c60bd0,0x34febd0b,0x6503cf04, 0x854f709e,0xfb0fc034,0x874c9c65,0x2f94cc40,0x15a12deb,0x5c15f4a3,0x490786bb, 0x6d658673,0xa4341f7d,0x8fd75920,0xefd18d5a])
-input2 = array('I', [x^y for x,y in zip(input1, [0, 0, 0, 0, 0, 1<<10, 0, 0, 0, 0, 1<<31, 0, 0, 0, 0, 0])])
-```
 
-
-MD5(input1)=MD5(input2) ==> MD5(input1∣∣s)=MD5(input2∣∣s) (s is  a string ).
-we  have to  convert one of them to a prime number get the flag.
-
-###### to convert input1 to a prime :
-```python
-n = 0  
-s = long_to_bytes(n, 4)    
-while not (isPrime(bytes_to_long(input1 + s))):  
-    n += 1  
-    s = long_to_bytes(n, 4)
-```
-
-
-### Exploitation:
-
-```python
-  
-import json  
-from pwn import *  
-from array import array  
-from Crypto.Util.number import *  
-  
-HOST = "socket.cryptohack.org"  
-PORT = 13392  
-  
-tn = remote(HOST, PORT)  
-  
-FLAG = "crypto{???????????????????????????????????}"  
-def json_recv():  
-    line=tn.recvline()  
-    return json.loads(line.decode())  
-  
-def json_send(hsh):  
-    request = json.dumps(hsh).encode()  
-    tn.sendline(request)  
-  
 
