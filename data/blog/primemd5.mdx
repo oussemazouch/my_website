@@ -69,12 +69,12 @@ the msg  must  contain the 'option' key  and it  can have two values :
 then we are obliged to send a prime number `p` (its bit_length 1024) ,the server calculates its MD5 hash , then sign it with  sig_scheme and returns its signature as a hex string.
 ###### if option='check'
 the it's required  to send a prime and a signature and the server will verify its  validity.
-also our json input should contain a number a  (1=<a<p)
+also our json input should contain a number a strictly between 1 and p.
 on the assumption that our signature is valid the server will return (pgcd(a, p)) bytes of the flag 
 
 #### the problem is that : 
  ∀ `P` Prime number
- ∀ a entre 1 et p
+ ∀ a  strictly between  1 et p
  PGDD(p,a) =1
 
 
@@ -166,3 +166,4 @@ request_2 = {
 json_send(request_2)  
 tn.interactive()
 ```
+
