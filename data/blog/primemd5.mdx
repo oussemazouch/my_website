@@ -1,16 +1,7 @@
----
-title: crypto : MD5 collision
-date: '2023-10-04'
-tags: ['crypto']
-draft: false
-summary: 'writeup for a  crypto challenge from cryptohack(from the hashing functions challenges).'
-authors: ['oussema zouch']
----
 ## PriMeD5 challenge (From cryptohack)
 
 
 given the source code of the challenge :
-
 ```python
 from Crypto.PublicKey import RSA  
 from Crypto.Hash import MD5  
@@ -78,13 +69,13 @@ the msg  must  contain the 'option' key  and it  can have two values :
 then we are obliged to send a prime number `p` (its bit_length 1024) ,the server calculates its MD5 hash , then sign it with  sig_scheme and returns its signature as a hex string.
 ###### if option='check'
 the it's required  to send a prime and a signature and the server will verify its  validity.
-also our json input should contain a number `a`  (1=<`a`<`p`)
-on the assumption that our signature is valid the server will return (pgcd(`a`, `p`)) bytes of the flag 
+also our json input should contain a number a  (1=<a<p)
+on the assumption that our signature is valid the server will return (pgcd(a, p)) bytes of the flag 
 
 #### the problem is that : 
-∀ `P` Prime number
-∀ a ∈ [1,`p`]
-PGDD(`p`,`a`) =1
+ ∀ `P` Prime number
+ ∀ a entre 1 et p
+ PGDD(p,a) =1
 
 
 ### Brainstorming 
@@ -175,3 +166,4 @@ request_2 = {
 json_send(request_2)  
 tn.interactive()
 ```
+
