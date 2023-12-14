@@ -93,7 +93,9 @@ Disallow: /modules/
 Disallow: /plugins/
 Disallow: /tmp/
 ```
-Visiting /administrator :
+
+Visiting /administrator 
+
 ![joomlalogin.png](/static/images/joomlalogin.png)
 
 Our application hosted by the **Joomla** CMS. We have  a login page. My initial thought was to determine the version of Joomla being used. I found a Metasploit Module that can scan the joomla version for me. 
@@ -104,16 +106,24 @@ auxiliary/scanner/http/joomla_version
 running it reveals that the used version is : `4.2.6`
 
 ![joomlascan.png](/static/images/joomlascan.png)
+
 Some searches reveal that this version contains an improper API access vulnerability as shown below.  
 
 ![ba3bas](/static/images/ba3bas.png)
-used another metasploit module to exploit this  vulnerability.
+
+Metasploit,again,contains a module that can exploit this  vulnerability.
+
 ![joomla_api_exploit.png](/static/images/joomla_api_exploit.png)
 
+
 Running the module and it reveals some credentials. 
-![Untitled design (2).png](/static/images/Untitled design (2).png)
+
+![joomlaex.png](/static/images/joomlaex.png)
+
 I attempted to authenticate on the Joomla login page using previously found credentials.
+
 ![jmal.png](/static/images/jmal.png)
+
 
 Now,it would be great if  I can  establish a reverse shell to our host machine.
 navigating through System -> Templates ->site templates ,I found an installed PHP template (error.php) that I can edit and  use it to my advantage to gain a reverse shell.
@@ -129,8 +139,11 @@ curl http://dev.devvortex.htb/templates/cassiopeia/error.php
 ![rev.png](/static/images/rev.png)
 
 listing the home directory there was another user (logan).I got the idea to connect to the joomla  database and see if there is any important informations.
+
 ![database.png](/static/images/database.png)
+
 As expected ,the password of the `logan` user is here but hashed. That's why we need to crack  using john . 
+
 ![hash_carck.png](/static/images/hash_carck.png)
 
 
