@@ -103,12 +103,12 @@ auxiliary/scanner/http/joomla_version
 ```
 running it reveals that the used version is : `4.2.6`
 
-![Pasted image 20231213214408](/static/images/Pasted image 20231213214408.png)
- Some searching reveals that this version contains an improper API access vulnerability as shown below.  
+![joomlascan.png](/static/images/joomlascan.png)
+Some searches reveal that this version contains an improper API access vulnerability as shown below.  
 
 ![ba3bas](/static/images/ba3bas.png)
 used another metasploit module to exploit this  vulnerability.
-![aadzsazza 1.png](/static/images/aadzsazza 1.png)
+![joomla_api_exploit.png](/static/images/joomla_api_exploit.png)
 
 Running the module and it reveals some credentials. 
 ![Untitled design (2).png](/static/images/Untitled design (2).png)
@@ -143,7 +143,7 @@ running `sudo -l` to know which commands `logan` is   allowed to run with elevat
 ![sudo.png](/static/images/sudo.png)
 
 Logan can run  the apport-cli utility with root access.
-doing some researches reveals that a privilege escalation attack was found in apport-cli 2.26.0 and earlier (for more details you can visit :[[https://nvd.nist.gov/vuln/detail/CVE-2023-1326]]).
+doing some researches reveal that a privilege escalation attack was found in apport-cli 2.26.0 and earlier (for more details you can visit :[[https://nvd.nist.gov/vuln/detail/CVE-2023-1326]]).
 I Found A  POC of this CVE in github [[https://github.com/diego-tella/CVE-2023-1326-PoC]] that helped me to exploit this vulnerability and  get the root access.
 
 ![root7.png](/static/images/root7.png)
