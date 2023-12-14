@@ -9,7 +9,7 @@ summary: 'writeup of pwning  DevVortex machine from HACK THE BOX.'
 # Hack The Box Write-Up: DevVortex 
 
 #### Enumeration 
-launching a scan on our target machine it reveals those open ports:
+Launching a scan against our target machine :
 
 ```
 ./scan.sh 10.10.11.242
@@ -37,23 +37,22 @@ It was a dummy website and even the  Contact Us and Email Subscription forms alm
 #### Subdomains Enumeration
  Starting a Sub-domain enumeration with `ffuf`  was fruitful as it reveals the `dev.devvortex.htb` subdomain . 
 
-
-![zzzz](/static/images/zzzz.png)
+![zzzz.png](/static/images/zzzz.png)
 
 
 I added to vhost to  `/etc/hosts` and I visited the website.
 
-![devvortex 1](/static/images/devvortex 1.png)
+![devvortex 1.png](/static/images/devvortex 1.png)
 
 
 Another Dummy website!!!!!!!
 #### Directory enumeration
 I got he idea to run a directory enumeration .
 
-![az](/static/images/az.png)
+![az.png](/static/images/az.png)
 
 
-![esd](/static/images/esd.png)
+![esd.png](/static/images/esd.png)
 
 
  ```
@@ -95,7 +94,7 @@ Disallow: /plugins/
 Disallow: /tmp/
 ```
 Visiting /administrator :
-![zaeazdazadzdaz 1](/static/images/zaeazdazadzdaz 1.png)
+![zaeazdazadzdaz 1.png](/static/images/zaeazdazadzdaz 1.png)
 
 Our application hosted by the **Joomla** CMS. We have  a login page. My initial thought was to determine the version of Joomla being used. I found a Metasploit Module that can scan the joomla version for me. 
 
@@ -109,25 +108,25 @@ running it reveals that the used version is : `4.2.6`
 
 ![ba3bas](/static/images/ba3bas.png)
 used another metasploit module to exploit this  vulnerability.
-![aadzsazza 1](/static/images/aadzsazza 1.png)
+![aadzsazza 1.png](/static/images/aadzsazza 1.png)
 
 Running the module and it reveals some credentials. 
-![Untitled design (2)](/static/images/Untitled design (2).png)
+![Untitled design (2).png](/static/images/Untitled design (2).png)
 I attempted to authenticate on the Joomla login page using previously found credentials.
-![jmal](/static/images/jmal.png)
+![jmal.png](/static/images/jmal.png)
 
 Now,it would be great if  I can  establish a reverse shell to our host machine.
 navigating through System -> Templates ->site templates ,I found an installed PHP template (error.php) that I can edit and  use it to my advantage to gain a reverse shell.
 
 I pasted my reverse shell :
-![php](/static/images/php.png)
+![php.png](/static/images/php.png)
 
 I started a listener on the `1234` port. and I visited the template to trigger the execution of my reverse shell paylaod.
 
 ```
 curl http://dev.devvortex.htb/templates/cassiopeia/error.php
 ```
-![rev](/static/images/rev.png)
+![rev.png](/static/images/rev.png)
 
 listing the home directory there was another user (logan).I got the idea to connect to the joomla  database and see if there is any important informations.
 ![Untitled design (5)](/static/images/Untitled design (5).png)
@@ -136,23 +135,23 @@ As expected ,the password of the `logan` user is here but hashed. That's why we 
 
 
 I used  logan  credentials and attempted to  authenticate via SSH .
-![ssh](/static/images/ssh.png)
+![ssh.png](/static/images/ssh.png)
 
 #### Privilege Escalation
 
 running `sudo -l` to know which commands `logan` is   allowed to run with elevated privileges using `sudo`.
-![sudo](/static/images/sudo.png)
+![sudo.png](/static/images/sudo.png)
 
 Logan can run  the apport-cli utility with root access.
 doing some researches reveals that a privilege escalation attack was found in apport-cli 2.26.0 and earlier (for more details you can visit :[[https://nvd.nist.gov/vuln/detail/CVE-2023-1326]]).
 I Found A  POC of this CVE in github [[https://github.com/diego-tella/CVE-2023-1326-PoC]] that helped me to exploit this vulnerability and  get the root access.
 
-![Untitled design (7)](/static/images/Untitled design (7).png)
+![Untitled design (7).png](/static/images/Untitled design (7).png)
 
 
 
 
-![pwned 1](/static/images/pwned 1.png)
+![pwned 1.png](/static/images/pwned 1.png)
 
 
 ##### Thanks for reading!!
