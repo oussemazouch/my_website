@@ -129,9 +129,9 @@ curl http://dev.devvortex.htb/templates/cassiopeia/error.php
 ![rev.png](/static/images/rev.png)
 
 listing the home directory there was another user (logan).I got the idea to connect to the joomla  database and see if there is any important informations.
-![Untitled design (5)](/static/images/Untitled design (5).png)
+![database.png](/static/images/database.png)
 As expected ,the password of the `logan` user is here but hashed. That's why we need to crack  using john . 
-![Untitled design (6)](/static/images/Untitled design (6).png)
+![hash_carck.png](/static/images/hash_carck.png)
 
 
 I used  logan  credentials and attempted to  authenticate via SSH .
@@ -146,12 +146,11 @@ Logan can run  the apport-cli utility with root access.
 doing some researches reveals that a privilege escalation attack was found in apport-cli 2.26.0 and earlier (for more details you can visit :[[https://nvd.nist.gov/vuln/detail/CVE-2023-1326]]).
 I Found A  POC of this CVE in github [[https://github.com/diego-tella/CVE-2023-1326-PoC]] that helped me to exploit this vulnerability and  get the root access.
 
-![Untitled design (7).png](/static/images/Untitled design (7).png)
+![root7.png](/static/images/root7.png)
 
 
 
-
-![pwned 1.png](/static/images/pwned 1.png)
+![pwned11.png](/static/images/pwned11.png)
 
 
 ##### Thanks for reading!!
