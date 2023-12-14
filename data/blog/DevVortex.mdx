@@ -38,7 +38,7 @@ Nmap done: 1 IP address (1 host up) scanned in 8.15 seconds
 
 As Mentioned above, open ports are 80(HTTP service),22(SSH service).Let's visit the website. 
 
-![[public\static\images\111.png]]
+![111.png](/static/images/111.png)
 
 It was a dummy website and even the  Contact Us and Email Subscription forms almost  do nothing because  the  `action` attribute of the form is empty (`action=""`) which means that the data will be submitted to the same URL that rendered the form which is a HTML page(can’t handle data passed in the URL).
 
@@ -46,17 +46,23 @@ It was a dummy website and even the  Contact Us and Email Subscription forms alm
  Starting a Sub-domain enumeration with `ffuf`  was fruitful as it reveals the `dev.devvortex.htb` subdomain . 
 
 
-![[public\static\images\zzzz.png]]
+[zzzz](/static/images/zzzz.png)
+
 
 I added to vhost to  `/etc/hosts` and I visited the website.
 
-![[public\static\images\devvortex 1.png]]
+[devvortex 1](/static/images/devvortex 1.png)
+
 
 Another Dummy website!!!!!!!
 #### Directory enumeration
 I got he idea to run a directory enumeration .
 
-![[public\static\images\az.png]]![[public\static\images\esd.png]]
+[az](/static/images/az.png)
+
+
+[esd](/static/images/esd.png)
+
 
  ```
  [Status: 301, Size: 178, Words: 6, Lines: 8, Duration: 367ms]
@@ -97,7 +103,7 @@ Disallow: /plugins/
 Disallow: /tmp/
 ```
 Visiting /administrator :
-![[public\static\images\zaeazdazadzdaz 1.png]]
+[zaeazdazadzdaz 1](/static/images/zaeazdazadzdaz 1.png)
 
 Our application hosted by the **Joomla** CMS. We have  a login page. My initial thought was to determine the version of Joomla being used. I found a Metasploit Module that can scan the joomla version for me. 
 
@@ -106,55 +112,55 @@ auxiliary/scanner/http/joomla_version
 ```
 running it reveals that the used version is : `4.2.6`
 
-![[public\static\images\Pasted image 20231213214408.png]]
+[Pasted image 20231213214408](/static/images/Pasted image 20231213214408.png)
  Some searching reveals that this version contains an improper API access vulnerability as shown below.  
 
-![[public\static\images\ba3bas.png]]
+[ba3bas](/static/images/ba3bas.png)
 used another metasploit module to exploit this  vulnerability.
-![[public\static\images\aadzsazza 1.png]]
+[aadzsazza 1](/static/images/aadzsazza 1.png)
+
 Running the module and it reveals some credentials. 
-![[public\static\images\Untitled design (2).png]]
+[Untitled design (2)](/static/images/Untitled design (2).png)
 I attempted to authenticate on the Joomla login page using previously found credentials.
-![[public\static\images\jmal.png]]
+[jmal](/static/images/jmal.png)
 
 Now,it would be great if  I can  establish a reverse shell to our host machine.
 navigating through System -> Templates ->site templates ,I found an installed PHP template (error.php) that I can edit and  use it to my advantage to gain a reverse shell.
 
 I pasted my reverse shell :
-![[public\static\images\php.png]]
+[php](/static/images/php.png)
 
 I started a listener on the `1234` port. and I visited the template to trigger the execution of my reverse shell paylaod.
 
 ```
 curl http://dev.devvortex.htb/templates/cassiopeia/error.php
 ```
-![[public\static\images\rev.png]]
+[rev](/static/images/rev.png)
+
 listing the home directory there was another user (logan).I got the idea to connect to the joomla  database and see if there is any important informations.
-
-![[public\static\images\Untitled design (5).png]]
+[Untitled design (5)](/static/images/Untitled design (5).png)
 As expected ,the password of the `logan` user is here but hashed. That's why we need to crack  using john . 
+[Untitled design (6)](/static/images/Untitled design (6).png)
 
-![[public\static\images\Untitled design (6).png]]
 
 I used  logan  credentials and attempted to  authenticate via SSH .
-
-![[public\static\images\ssh.png]]
+[ssh](/static/images/ssh.png)
 
 #### Privilege Escalation
 
 running `sudo -l` to know which commands `logan` is   allowed to run with elevated privileges using `sudo`.
+[sudo](/static/images/sudo.png)
 
-![[sudo.png]]
 Logan can run  the apport-cli utility with root access.
 doing some researches reveals that a privilege escalation attack was found in apport-cli 2.26.0 and earlier (for more details you can visit :[[https://nvd.nist.gov/vuln/detail/CVE-2023-1326]]).
 I Found A  POC of this CVE in github [[https://github.com/diego-tella/CVE-2023-1326-PoC]] that helped me to exploit this vulnerability and  get the root access.
 
-
-![[ public\static\images\Untitled design (7).png]]
-
+[Untitled design (7)](/static/images/Untitled design (7).png)
 
 
 
-![[public\static\images\pwned 1.png]]
+
+[pwned 1](/static/images/pwned 1.png)
+
 
 ##### Thanks for reading!!
