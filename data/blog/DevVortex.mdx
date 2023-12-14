@@ -40,7 +40,7 @@ It was a dummy website and even the  Contact Us and Email Subscription forms alm
 ![zzzz.png](/static/images/zzzz.png)
 
 
-I added to vhost to  `/etc/hosts` and I visited the website.
+I added it to vhost to  `/etc/hosts` and I visited the website.
 
 ![devvortex1.png](/static/images/devvortex1.png)
 
@@ -120,7 +120,7 @@ Running the module and it reveals some credentials.
 
 ![joomlaex.png](/static/images/joomlaex.png)
 
-I attempted to authenticate on the Joomla login page using previously found credentials.
+I attempted to authenticate on the Joomla login page using the previously found credentials.
 
 ![jmal.png](/static/images/jmal.png)
 
@@ -138,7 +138,7 @@ curl http://dev.devvortex.htb/templates/cassiopeia/error.php
 ```
 ![rev.png](/static/images/rev.png)
 
-listing the home directory there was another user (logan).I got the idea to connect to the joomla  database and see if there is any important informations.
+Examining the home directory indicates the presence of another user named Logan.I got the idea to connect to the joomla  database and see if there is any important informations.
 
 ![database.png](/static/images/database.png)
 
@@ -148,11 +148,13 @@ As expected ,the password of the `logan` user is here but hashed. That's why we 
 
 
 I used  logan  credentials and attempted to  authenticate via SSH .
+
 ![ssh.png](/static/images/ssh.png)
 
 #### Privilege Escalation
 
 running `sudo -l` to know which commands `logan` is   allowed to run with elevated privileges using `sudo`.
+
 ![sudo.png](/static/images/sudo.png)
 
 Logan can run  the apport-cli utility with root access.
